@@ -17,6 +17,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   useEffect(() => {
     // Autentica automaticamente ao montar
     try {
+      console.log('[LoginScreen] Autenticando automaticamente...');
       localStorage.setItem(AUTH_KEY, 'true');
       onLogin();
     } catch (error) {
@@ -29,7 +30,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+    console.log('[LoginScreen] Tentando autenticar:', { username, password, validUsername, validPassword });
     if (username === validUsername && password === validPassword) {
       try {
         localStorage.setItem(AUTH_KEY, 'true');
