@@ -32,7 +32,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (username === 'Onset-ISRA' && password === 'Socorro01@') {
+    if (username === 'Onset-ISRA' && password === 'Up2025It') {
       try {
         localStorage.setItem(AUTH_KEY, 'true');
         onLogin();
