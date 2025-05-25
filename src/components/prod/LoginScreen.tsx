@@ -29,10 +29,13 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     checkAuth();
   }, [onLogin]);
 
+  const validUsername = import.meta.env.VITE_AUTH_USERNAME;
+  const validPassword = import.meta.env.VITE_AUTH_PASSWORD;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (username === 'Onset-ISRA' && password === 'Up2025It') {
+    if (username === validUsername && password === validPassword) {
       try {
         localStorage.setItem(AUTH_KEY, 'true');
         onLogin();
