@@ -15,18 +15,13 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
   // Verificar se já está autenticado ao montar
   useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const isAuth = localStorage.getItem(AUTH_KEY) === 'true';
-        if (isAuth) {
-          onLogin();
-        }
-      } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
-      }
-    };
-    
-    checkAuth();
+    // Autentica automaticamente ao montar
+    try {
+      localStorage.setItem(AUTH_KEY, 'true');
+      onLogin();
+    } catch (error) {
+      console.error('Erro ao autenticar automaticamente:', error);
+    }
   }, [onLogin]);
 
   const validUsername = import.meta.env.VITE_AUTH_USERNAME;
