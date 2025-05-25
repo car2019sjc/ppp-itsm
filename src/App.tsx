@@ -83,8 +83,6 @@ const SLA_THRESHOLDS = {
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   const [showRequestDashboard, setShowRequestDashboard] = useState(false);
   const [showExecutiveDashboard, setShowExecutiveDashboard] = useState(false);
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -592,12 +590,10 @@ function App() {
   };
 
   const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
     localStorage.setItem('app_auth_state', 'true');
   };
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
     localStorage.removeItem('app_auth_state');
     setShowFileSelector(true);
     setIncidents([]);
@@ -632,424 +628,413 @@ function App() {
     return <RequestDashboard onBack={() => setShowRequestDashboard(false)} requests={requests} />;
   }
 
-  if (!isAuthenticated) {
-    return <Auth onAuthSuccess={handleAuthSuccess} />;
-  }
-
   console.log("Current incidents count:", incidents.length);
   console.log("Current requests count:", requests.length);
   console.log("Filtered incidents count:", filteredIncidents.length);
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-white">
-      {!isAuthenticated ? (
-        <Auth onAuthSuccess={handleAuthSuccess} />
-      ) : (
-        <>
-          <DashboardHeader
-            title={environment.appTitle}
-            onLogout={handleLogout}
-            {...(!showFileSelector && {
-              onShowRequestDashboard: () => setShowRequestDashboard(true),
-              onShowExecutiveDashboard: () => setShowExecutiveDashboard(true),
-            })}
-          />
-          
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {showFileSelector ? (
-              <div className="max-w-4xl mx-auto">
-                <FileUploadSelector 
-                  onSelectIncidents={handleIncidentsLoaded} 
-                  onSelectRequests={handleRequestsLoaded} 
-                />
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {showPriorityAlert && criticalPendingIncidents.length > 0 && (
-                  <PriorityAlert 
-                    incidents={filteredIncidents}
-                    onClose={() => setShowPriorityAlert(false)}
-                  />
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                  <StatsCard
-                    title="Total de Chamados"
-                    value={stats?.total || 0}
-                    icon={BarChart3}
-                    trend={stats?.trend}
-                    className="bg-[#151B2B]"
-                    onClick={() => setShowHistoricalData(!showHistoricalData)}
-                    clickable={true}
-                    subtitle="Clique para ver histórico"
-                  />
-                  <StatsCard
-                    title="P1/P2 Pendentes"
-                    value={stats?.criticalPending || 0}
-                    icon={AlertOctagon}
-                    trendColor="text-red-500"
-                    className="bg-[#151B2B] border-2 border-red-500/50"
-                    valueColor="text-red-500"
-                    onClick={() => setShowCriticalIncidents(true)}
-                    clickable={true}
-                  />
-                  <StatsCard
-                    title="Chamados Pendentes"
-                    value={stats?.pending || 0}
-                    icon={AlertCircle}
-                    className="bg-[#151B2B] border-2 border-yellow-500/50"
-                    valueColor="text-yellow-500"
-                    onClick={() => setShowPendingIncidents(true)}
-                    clickable={true}
-                  />
-                  <StatsCard
-                    title="Chamados On Hold"
-                    value={stats?.onHold || 0}
-                    icon={PauseCircle}
-                    className="bg-[#151B2B] border-2 border-orange-500/50"
-                    valueColor="text-orange-500"
-                    onClick={() => setShowOnHoldIncidents(true)}
-                    clickable={true}
-                  />
-                  <StatsCard
-                    title="Fora de Regra"
-                    value={stats?.outOfRule || 0}
-                    icon={Timer}
-                    className="bg-[#151B2B] border-2 border-red-500/50"
-                    valueColor="text-red-500"
-                    onClick={() => setShowOutOfRuleIncidents(true)}
-                    clickable={true}
-                    subtitle="Chamados abertos > 48h"
-                    subtitleColor="text-red-400"
-                  />
-                </div>
-
-                <div className="flex justify-between mb-4">
-                  <button
-                    onClick={() => setShowRequestDashboard(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
-                  >
-                    <FileText className="h-5 w-5" />
-                    <span>Ir para Dashboard de Requests</span>
-                    <ArrowLeft className="h-5 w-5 rotate-180" />
-                  </button>
-                </div>
-
-                {/* Monthly Location Summary */}
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-white">Sumarização Mensal por Localidade</h3>
-                  <button
-                    onClick={() => setShowMonthlyLocationSummary(!showMonthlyLocationSummary)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    <span>{showMonthlyLocationSummary ? 'Ocultar Detalhes' : 'Ver Detalhes'}</span>
-                  </button>
-                </div>
-
-                {showMonthlyLocationSummary && (
-                  <MonthlyLocationSummary
-                    incidents={filteredIncidents}
-                    onClose={() => setShowMonthlyLocationSummary(false)}
-                  />
-                )}
-
-                <SupportQueuesAnalysis incidents={filteredIncidents} />
-
-                {showHistoricalData && (
-                  <HistoricalDataAnalysis
-                    incidents={incidents}
-                    requests={requests}
-                    onClose={() => setShowHistoricalData(false)}
-                  />
-                )}
-
-                <SearchBar
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  startDate={startDate}
-                  endDate={endDate}
-                  onStartDateChange={setStartDate}
-                  onEndDateChange={setEndDate}
-                  selectedCategory={selectedCategory}
-                  onCategoryChange={setSelectedCategory}
-                  categories={categories}
-                  requests={requests}
-                  selectedStatus={selectedStatus}
-                  onStatusChange={setSelectedStatus}
-                />
-
-                <DashboardSections
-                  onSectionClick={handleSectionClick}
-                  activeSection={activeSection}
-                  onShowPendingIncidents={() => setShowPendingIncidents(true)}
-                  data={filteredIncidents}
-                  dateRange={{
-                    start: startOfDay(parseISO(startDate)),
-                    end: endOfDay(parseISO(endDate))
-                  }}
-                />
-
-                {/* Renderização condicional dos componentes baseada na seção ativa */}
-                {activeSection === 'associates' && (
-                  <UserAnalysis
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                    startDate={startDate}
-                    endDate={endDate}
-                  />
-                )}
-
-                {activeSection === 'category' && (
-                  <CategoryAnalysis 
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                    startDate={startDate}
-                    endDate={endDate}
-                  />
-                )}
-
-                {activeSection === 'sla' && (
-                  <SLAAnalysis
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                    startDate={startDate}
-                    endDate={endDate}
-                  />
-                )}
-
-                {activeSection === 'group' && (
-                  <GroupAnalysis
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                    startDate={startDate}
-                    endDate={endDate}
-                  />
-                )}
-
-                {activeSection === 'category-history' && (
-                  <CategoryHistoryAnalysis
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                  />
-                )}
-
-                {activeSection === 'group-history' && (
-                  <GroupHistoryAnalysis
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                  />
-                )}
-
-                {activeSection === 'sla-history' && (
-                  <SLAHistoryAnalysis
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                    startDate={startDate}
-                    endDate={endDate}
-                  />
-                )}
-
-                {activeSection === 'executive' && (
-                  <ExecutiveDashboard 
-                    incidents={filteredIncidents} 
-                    requests={requests} 
-                    onBack={() => setActiveSection('')} 
-                  />
-                )}
-
-                {activeSection === 'top-categories' && (
-                  <CategoryHistoryTop5
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                    startDate={startDate}
-                    endDate={endDate}
-                  />
-                )}
-
-                {activeSection === 'top-locations' && (
-                  <LocationHistoryTop5
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                    startDate={startDate}
-                    endDate={endDate}
-                  />
-                )}
-
-                {activeSection === 'monthly-location-summary' && (
-                  <MonthlyLocationSummary
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                  />
-                )}
-
-                {activeSection === 'predictive' && (
-                  <AIAnalyst
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                  />
-                )}
-
-                {activeSection === 'analyst' && (
-                  <AnalystAnalysis
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                    startDate={startDate}
-                    endDate={endDate}
-                  />
-                )}
-
-                {activeSection === 'shift' && (
-                  <ShiftHistoryAnalysis
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                  />
-                )}
-
-                {activeSection === 'software' && (
-                  <SoftwareAnalysis
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                    startDate={startDate}
-                    endDate={endDate}
-                  />
-                )}
-
-                {activeSection === 'top-string-associado' && (
-                  <TopIncidentsByStringAssociado
-                    incidents={filteredIncidents}
-                    onBack={() => setActiveSection('')}
-                    onShowIncidentDetails={setSelectedIncident}
-                  />
-                )}
-
-                {activeSection === 'location-history' && (
-                  <LocationHistoryTop5
-                    incidents={filteredIncidents}
-                    onClose={() => setActiveSection('')}
-                    startDate={startDate}
-                    endDate={endDate}
-                  />
-                )}
-
-                {activeSection === 'monthly-variation' && (
-                  <MonthlyVariation
-                    incidents={filteredIncidents}
-                    requests={requests}
-                    startDate={startDate}
-                    endDate={endDate}
-                    onClose={() => setActiveSection('')}
-                  />
-                )}
-
-                {activeSection === 'monthly-location-variation' && (
-                  <MonthlyLocationVariation
-                    incidents={filteredIncidents}
-                    requests={requests}
-                    startDate={startDate}
-                    endDate={endDate}
-                    onClose={() => setActiveSection('')}
-                  />
-                )}
-
-                {activeSection === 'comparative-volumetry' && (
-                  <ComparativeVolumetry
-                    incidents={filteredIncidents}
-                    requests={requests}
-                    startDate={startDate}
-                    endDate={endDate}
-                    onClose={() => setActiveSection('')}
-                  />
-                )}
-
-                {activeSection === 'location-distribution' && (
-                  <LocationDistribution
-                    incidents={filteredIncidents}
-                    requests={requests}
-                    startDate={startDate}
-                    endDate={endDate}
-                    onClose={() => setActiveSection('')}
-                  />
-                )}
-
-                {/* Modais */}
-                {showCriticalIncidents && (
-                  <CriticalIncidentsModal
-                    incidents={criticalPendingIncidents}
-                    onClose={() => setShowCriticalIncidents(false)}
-                  />
-                )}
-
-                {showPendingIncidents && (
-                  <PendingIncidentsModal
-                    incidents={pendingIncidents}
-                    onClose={() => setShowPendingIncidents(false)}
-                  />
-                )}
-
-                {showOnHoldIncidents && (
-                  <OnHoldIncidentsModal
-                    incidents={onHoldIncidents}
-                    onClose={() => setShowOnHoldIncidents(false)}
-                  />
-                )}
-
-                {showOutOfRuleIncidents && (
-                  <OutOfRuleIncidentsModal
-                    incidents={outOfRuleIncidents}
-                    onClose={() => setShowOutOfRuleIncidents(false)}
-                  />
-                )}
-
-                {selectedIncident && (
-                  <IncidentDetails
-                    incident={selectedIncident}
-                    onClose={handleCloseIncidentDetails}
-                  />
-                )}
-              </div>
-            )}
-          </main>
-
-          {showExecutiveIndicatorsModal && (
-            <ExecutiveIndicatorsModal
-              onClose={() => setShowExecutiveIndicatorsModal(false)}
-              indicadores={[
-                { nome: 'Total de Incidentes', valor: filteredIncidents.length },
-                { nome: 'SLA Global', valor: '98%' },
-                // Adicione outros indicadores relevantes aqui
-              ]}
+      <DashboardHeader
+        title={environment.appTitle}
+        onLogout={handleLogout}
+        {...(!showFileSelector && {
+          onShowRequestDashboard: () => setShowRequestDashboard(true),
+          onShowExecutiveDashboard: () => setShowExecutiveDashboard(true),
+        })}
+      />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {showFileSelector ? (
+          <div className="max-w-4xl mx-auto">
+            <FileUploadSelector 
+              onSelectIncidents={handleIncidentsLoaded} 
+              onSelectRequests={handleRequestsLoaded} 
             />
-          )}
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {showPriorityAlert && criticalPendingIncidents.length > 0 && (
+              <PriorityAlert 
+                incidents={filteredIncidents}
+                onClose={() => setShowPriorityAlert(false)}
+              />
+            )}
 
-          {showExecutiveMenu && (
-            <ExecutiveMenuModal
-              onClose={() => setShowExecutiveMenu(false)}
-              onNavigate={(section) => {
-                setShowExecutiveMenu(false);
-                if (section === 'top-categories') setShowTopCategories(true);
-                if (section === 'top-locations') setShowTopLocations(true);
-                if (section === 'monthly-summary') setShowMonthlySummary(true);
-                if (section === 'monthly-location-summary') setShowMonthlyLocationSummary(true);
-                if (section === 'executive') {
-                  // Aqui você pode abrir o dashboard completo ou outro modal, conforme sua arquitetura
-                }
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              <StatsCard
+                title="Total de Chamados"
+                value={stats?.total || 0}
+                icon={BarChart3}
+                trend={stats?.trend}
+                className="bg-[#151B2B]"
+                onClick={() => setShowHistoricalData(!showHistoricalData)}
+                clickable={true}
+                subtitle="Clique para ver histórico"
+              />
+              <StatsCard
+                title="P1/P2 Pendentes"
+                value={stats?.criticalPending || 0}
+                icon={AlertOctagon}
+                trendColor="text-red-500"
+                className="bg-[#151B2B] border-2 border-red-500/50"
+                valueColor="text-red-500"
+                onClick={() => setShowCriticalIncidents(true)}
+                clickable={true}
+              />
+              <StatsCard
+                title="Chamados Pendentes"
+                value={stats?.pending || 0}
+                icon={AlertCircle}
+                className="bg-[#151B2B] border-2 border-yellow-500/50"
+                valueColor="text-yellow-500"
+                onClick={() => setShowPendingIncidents(true)}
+                clickable={true}
+              />
+              <StatsCard
+                title="Chamados On Hold"
+                value={stats?.onHold || 0}
+                icon={PauseCircle}
+                className="bg-[#151B2B] border-2 border-orange-500/50"
+                valueColor="text-orange-500"
+                onClick={() => setShowOnHoldIncidents(true)}
+                clickable={true}
+              />
+              <StatsCard
+                title="Fora de Regra"
+                value={stats?.outOfRule || 0}
+                icon={Timer}
+                className="bg-[#151B2B] border-2 border-red-500/50"
+                valueColor="text-red-500"
+                onClick={() => setShowOutOfRuleIncidents(true)}
+                clickable={true}
+                subtitle="Chamados abertos > 48h"
+                subtitleColor="text-red-400"
+              />
+            </div>
+
+            <div className="flex justify-between mb-4">
+              <button
+                onClick={() => setShowRequestDashboard(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+              >
+                <FileText className="h-5 w-5" />
+                <span>Ir para Dashboard de Requests</span>
+                <ArrowLeft className="h-5 w-5 rotate-180" />
+              </button>
+            </div>
+
+            {/* Monthly Location Summary */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-white">Sumarização Mensal por Localidade</h3>
+              <button
+                onClick={() => setShowMonthlyLocationSummary(!showMonthlyLocationSummary)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+              >
+                <Calendar className="h-4 w-4" />
+                <span>{showMonthlyLocationSummary ? 'Ocultar Detalhes' : 'Ver Detalhes'}</span>
+              </button>
+            </div>
+
+            {showMonthlyLocationSummary && (
+              <MonthlyLocationSummary
+                incidents={filteredIncidents}
+                onClose={() => setShowMonthlyLocationSummary(false)}
+              />
+            )}
+
+            <SupportQueuesAnalysis incidents={filteredIncidents} />
+
+            {showHistoricalData && (
+              <HistoricalDataAnalysis
+                incidents={incidents}
+                requests={requests}
+                onClose={() => setShowHistoricalData(false)}
+              />
+            )}
+
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+              categories={categories}
+              requests={requests}
+              selectedStatus={selectedStatus}
+              onStatusChange={setSelectedStatus}
+            />
+
+            <DashboardSections
+              onSectionClick={handleSectionClick}
+              activeSection={activeSection}
+              onShowPendingIncidents={() => setShowPendingIncidents(true)}
+              data={filteredIncidents}
+              dateRange={{
+                start: startOfDay(parseISO(startDate)),
+                end: endOfDay(parseISO(endDate))
               }}
             />
-          )}
-          {showTopCategories && (
-            <TopCategoriesModal onClose={() => setShowTopCategories(false)} />
-          )}
-          {showTopLocations && (
-            <TopLocationsModal onClose={() => setShowTopLocations(false)} />
-          )}
-          {showMonthlySummary && (
-            <MonthlySummaryModal onClose={() => setShowMonthlySummary(false)} />
-          )}
-          {showMonthlyLocationSummary && (
-            <MonthlyLocationSummaryModal onClose={() => setShowMonthlyLocationSummary(false)} />
-          )}
-        </>
+
+            {/* Renderização condicional dos componentes baseada na seção ativa */}
+            {activeSection === 'associates' && (
+              <UserAnalysis
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+
+            {activeSection === 'category' && (
+              <CategoryAnalysis 
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+
+            {activeSection === 'sla' && (
+              <SLAAnalysis
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+
+            {activeSection === 'group' && (
+              <GroupAnalysis
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+
+            {activeSection === 'category-history' && (
+              <CategoryHistoryAnalysis
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+              />
+            )}
+
+            {activeSection === 'group-history' && (
+              <GroupHistoryAnalysis
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+              />
+            )}
+
+            {activeSection === 'sla-history' && (
+              <SLAHistoryAnalysis
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+
+            {activeSection === 'executive' && (
+              <ExecutiveDashboard 
+                incidents={filteredIncidents} 
+                requests={requests} 
+                onBack={() => setActiveSection('')} 
+              />
+            )}
+
+            {activeSection === 'top-categories' && (
+              <CategoryHistoryTop5
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+
+            {activeSection === 'top-locations' && (
+              <LocationHistoryTop5
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+
+            {activeSection === 'monthly-location-summary' && (
+              <MonthlyLocationSummary
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+              />
+            )}
+
+            {activeSection === 'predictive' && (
+              <AIAnalyst
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+              />
+            )}
+
+            {activeSection === 'analyst' && (
+              <AnalystAnalysis
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+
+            {activeSection === 'shift' && (
+              <ShiftHistoryAnalysis
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+              />
+            )}
+
+            {activeSection === 'software' && (
+              <SoftwareAnalysis
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+
+            {activeSection === 'top-string-associado' && (
+              <TopIncidentsByStringAssociado
+                incidents={filteredIncidents}
+                onBack={() => setActiveSection('')}
+                onShowIncidentDetails={setSelectedIncident}
+              />
+            )}
+
+            {activeSection === 'location-history' && (
+              <LocationHistoryTop5
+                incidents={filteredIncidents}
+                onClose={() => setActiveSection('')}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
+
+            {activeSection === 'monthly-variation' && (
+              <MonthlyVariation
+                incidents={filteredIncidents}
+                requests={requests}
+                startDate={startDate}
+                endDate={endDate}
+                onClose={() => setActiveSection('')}
+              />
+            )}
+
+            {activeSection === 'monthly-location-variation' && (
+              <MonthlyLocationVariation
+                incidents={filteredIncidents}
+                requests={requests}
+                startDate={startDate}
+                endDate={endDate}
+                onClose={() => setActiveSection('')}
+              />
+            )}
+
+            {activeSection === 'comparative-volumetry' && (
+              <ComparativeVolumetry
+                incidents={filteredIncidents}
+                requests={requests}
+                startDate={startDate}
+                endDate={endDate}
+                onClose={() => setActiveSection('')}
+              />
+            )}
+
+            {activeSection === 'location-distribution' && (
+              <LocationDistribution
+                incidents={filteredIncidents}
+                requests={requests}
+                startDate={startDate}
+                endDate={endDate}
+                onClose={() => setActiveSection('')}
+              />
+            )}
+
+            {/* Modais */}
+            {showCriticalIncidents && (
+              <CriticalIncidentsModal
+                incidents={criticalPendingIncidents}
+                onClose={() => setShowCriticalIncidents(false)}
+              />
+            )}
+
+            {showPendingIncidents && (
+              <PendingIncidentsModal
+                incidents={pendingIncidents}
+                onClose={() => setShowPendingIncidents(false)}
+              />
+            )}
+
+            {showOnHoldIncidents && (
+              <OnHoldIncidentsModal
+                incidents={onHoldIncidents}
+                onClose={() => setShowOnHoldIncidents(false)}
+              />
+            )}
+
+            {showOutOfRuleIncidents && (
+              <OutOfRuleIncidentsModal
+                incidents={outOfRuleIncidents}
+                onClose={() => setShowOutOfRuleIncidents(false)}
+              />
+            )}
+
+            {selectedIncident && (
+              <IncidentDetails
+                incident={selectedIncident}
+                onClose={handleCloseIncidentDetails}
+              />
+            )}
+          </div>
+        )}
+      </main>
+
+      {showExecutiveIndicatorsModal && (
+        <ExecutiveIndicatorsModal
+          onClose={() => setShowExecutiveIndicatorsModal(false)}
+          indicadores={[
+            { nome: 'Total de Incidentes', valor: filteredIncidents.length },
+            { nome: 'SLA Global', valor: '98%' },
+            // Adicione outros indicadores relevantes aqui
+          ]}
+        />
+      )}
+
+      {showExecutiveMenu && (
+        <ExecutiveMenuModal
+          onClose={() => setShowExecutiveMenu(false)}
+          onNavigate={(section) => {
+            setShowExecutiveMenu(false);
+            if (section === 'top-categories') setShowTopCategories(true);
+            if (section === 'top-locations') setShowTopLocations(true);
+            if (section === 'monthly-summary') setShowMonthlySummary(true);
+            if (section === 'monthly-location-summary') setShowMonthlyLocationSummary(true);
+            if (section === 'executive') {
+              // Aqui você pode abrir o dashboard completo ou outro modal, conforme sua arquitetura
+            }
+          }}
+        />
+      )}
+      {showTopCategories && (
+        <TopCategoriesModal onClose={() => setShowTopCategories(false)} />
+      )}
+      {showTopLocations && (
+        <TopLocationsModal onClose={() => setShowTopLocations(false)} />
+      )}
+      {showMonthlySummary && (
+        <MonthlySummaryModal onClose={() => setShowMonthlySummary(false)} />
+      )}
+      {showMonthlyLocationSummary && (
+        <MonthlyLocationSummaryModal onClose={() => setShowMonthlyLocationSummary(false)} />
       )}
     </div>
   );
