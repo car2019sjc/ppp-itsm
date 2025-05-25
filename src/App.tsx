@@ -85,10 +85,6 @@ const SLA_THRESHOLDS = {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    localStorage.removeItem('app_auth_state');
-  }, []);
-
   const [showRequestDashboard, setShowRequestDashboard] = useState(false);
   const [showExecutiveDashboard, setShowExecutiveDashboard] = useState(false);
   const [incidents, setIncidents] = useState<Incident[]>([]);
