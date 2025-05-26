@@ -82,6 +82,8 @@ const SLA_THRESHOLDS = {
   P4: 72   // 72 hours
 };
 
+const AUTH_KEY = 'app_auth_state';
+
 function App() {
   const [showRequestDashboard, setShowRequestDashboard] = useState(false);
   const [showExecutiveDashboard, setShowExecutiveDashboard] = useState(false);
@@ -134,6 +136,9 @@ function App() {
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().setDate(new Date().getDate() - 30)),
     end: new Date()
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem(AUTH_KEY) === 'true';
   });
 
   const categories = useMemo(() => {
@@ -589,12 +594,14 @@ function App() {
     setSearchQuery('');
   };
 
-  const handleAuthSuccess = () => {
-    localStorage.setItem('app_auth_state', 'true');
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem(AUTH_KEY, 'true');
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('app_auth_state');
+    setIsAuthenticated(false);
+    localStorage.removeItem(AUTH_KEY);
     setShowFileSelector(true);
     setIncidents([]);
     setRequests([]);
@@ -612,6 +619,10 @@ function App() {
     } else {
       setActiveSection(section);
     }
+  }
+
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={handleLogin} />;
   }
 
   if (showExecutiveDashboard) {
